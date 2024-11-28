@@ -16,37 +16,45 @@ from pydantic import BaseModel
 import uuid
 from typing import Optional
 
-sys.path.append("../..")
-
+# Ensure the environment variables are loaded correctly
 _ = load_dotenv(find_dotenv())
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# Set OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    raise ValueError("Missing OpenAI API key")
 
+# Create FastAPI app instance
 app = FastAPI()
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
 
-# Updated PostgreSQL configuration
+# PostgreSQL configuration from environment variables
 POSTGRES_USER = os.getenv("POSTGRES_USER", "your_username")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "your_password")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "your_database")
 
+# Connection string for PostgreSQL
 CONNECTION_STRING = f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
+# Collection name for the document database
 COLLECTION_NAME = "document_collection"
 
+# Pydantic model for the request payload
 class ChatRequest(BaseModel):
     query: str
     file_path: str
 
+# Endpoint for uploading PDF
 @app.post('/upload')
 async def upload_pdf(file: UploadFile = File(...)):
     try:
@@ -56,6 +64,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             unique_filename = str(uuid.uuid4()) + ".pdf"
             file_path = os.path.join(target_directory, unique_filename)
 
+            # Write the uploaded file to disk
             with open(file_path, "wb") as buffer:
                 content = await file.read()
                 buffer.write(content)
@@ -70,17 +79,14 @@ async def upload_pdf(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Endpoint for handling the chat request
 @app.post('/chat')
 async def chat(request: ChatRequest):
     try:
         query = request.query
         uploaded_file_path = request.file_path
 
-        print(f"Query: {query}")
-        print(uploaded_file_path)
-
         if uploaded_file_path:
-            print(f"Using PDF from: {uploaded_file_path}")
             loader = PyPDFLoader(uploaded_file_path)
             pages = loader.load()
 
@@ -92,19 +98,18 @@ async def chat(request: ChatRequest):
 
             embeddings = OpenAIEmbeddings()
 
+            # Initialize the vector store
             try:
-                # Updated PGVector initialization
                 vectordb = PGVector.from_documents(
                     embedding=embeddings,
                     documents=splits,
                     collection_name=COLLECTION_NAME,
                     connection_string=CONNECTION_STRING
                 )
-
             except Exception as e:
-                print(f"Error creating vector database: {e}")
                 raise HTTPException(status_code=500, detail=f"Error creating vector database: {str(e)}")
 
+            # Set up memory and the language model
             memory = ConversationBufferMemory(
                 memory_key="chat_history",
                 return_messages=True
@@ -114,6 +119,7 @@ async def chat(request: ChatRequest):
             retriever = vectordb.as_retriever()
 
             try:
+                # Create the QA chain for answering queries
                 qa_chain = RetrievalQA.from_chain_type(
                     llm,
                     retriever=retriever,
@@ -122,8 +128,8 @@ async def chat(request: ChatRequest):
 
                 result = qa_chain({"query": query})
                 answer = result.get("result")
-                print(answer)
 
+                # Handle conversational retrieval chain
                 conversation_chain = ConversationalRetrievalChain.from_llm(
                     llm,
                     retriever=retriever,
@@ -138,15 +144,15 @@ async def chat(request: ChatRequest):
                     "conversation_result": conversation_answer
                 })
             except Exception as e:
-                print(f"Error in QA chain: {e}")
                 raise HTTPException(status_code=500, detail=f"Error in QA chain: {str(e)}")
+
         else:
             raise HTTPException(status_code=400, detail="No PDF file path provided in the request")
 
     except Exception as e:
-        print(f"Error in chat endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Run the FastAPI app using Uvicorn
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
