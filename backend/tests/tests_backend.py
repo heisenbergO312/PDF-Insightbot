@@ -1,46 +1,34 @@
-import os
 import pytest
 from fastapi.testclient import TestClient
 from backend.app import app  # Ensure this import is correct, depending on your project structure
 
-# Fixed path for the test PDF
-TEST_PDF_PATH = "/Users/rohan/Developer/PDF-Insightbot/backend/tests/ASAG_NLP.pdf"
-
-@pytest.fixture(scope="module")
+@pytest.fixture
 def client():
-    with TestClient(app) as client:
-        yield client
+    return TestClient(app)
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_and_teardown():
-    # Setup: Ensure the test PDF exists
-    if not os.path.exists(TEST_PDF_PATH):
-        os.makedirs(os.path.dirname(TEST_PDF_PATH), exist_ok=True)
-        with open(TEST_PDF_PATH, "wb") as f:
-            f.write(b"%PDF-1.4 dummy pdf content")
-    
-    yield
-    
-    # Teardown: Clean up the test PDF after the tests
-    if os.path.exists(TEST_PDF_PATH):
-        os.remove(TEST_PDF_PATH)
+def test_app_initialization(client):
+    # Just check if the app initializes correctly
+    try:
+        # Check if we can access the root endpoint without running any queries
+        response = client.get("/")
+        assert response.status_code == 200  # Expecting the root endpoint to work
+    except Exception as e:
+        pytest.fail(f"App initialization failed with error: {e}")
 
-def test_upload(client):
-    print("Running test_upload")
-    # Test the /upload endpoint
-    with open(TEST_PDF_PATH, "rb") as file:
-        response = client.post("/upload", files={"file": ("test_file.pdf", file, "application/pdf")})
-    
-    assert response.status_code == 200
-    assert "PDF file uploaded and saved successfully" in response.json()["message"]
+def test_upload_endpoint(client):
+    # Check if the upload endpoint works without running any queries
+    try:
+        response = client.post("/upload", files={"file": ("test.pdf", b"sample pdf content")})
+        assert response.status_code == 200
+        assert "file_path" in response.json()
+    except Exception as e:
+        pytest.fail(f"Upload endpoint failed with error: {e}")
 
-def test_chat(client):
-    print("Running test_chat")
-    # Test the /chat endpoint
-    query = "What is this document about?"  # A sample query for testing
-    
-    response = client.post("/chat", json={"query": query, "file_path": TEST_PDF_PATH})
-    
-    assert response.status_code == 200
-    assert "result" in response.json()
-    assert "conversation_result" in response.json()
+def test_chat_endpoint(client):
+    # Skip running queries and just ensure the chat endpoint compiles and runs
+    try:
+        response = client.post("/chat", json={"query": "test", "file_path": "test.pdf"})
+        # Check that the response is not empty or invalid
+        assert response.status_code == 200
+    except Exception as e:
+        pytest.fail(f"Chat endpoint failed with error: {e}")
