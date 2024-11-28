@@ -20,14 +20,15 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Test') {
             steps {
                 script {
-                    // Run the test file
-                    sh "${env.PYTHON_ENV}/bin/pytest ${env.PROJECT_DIR}/tests/tests_backend.py --maxfail=1 --disable-warnings -q"
+                    env.PYTHONPATH = "${env.WORKSPACE}/backend"
                 }
+                sh 'pytest backend/tests/tests_backend.py'
             }
         }
+
 
         stage('Install Frontend Dependencies') {
             steps {
