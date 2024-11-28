@@ -22,4 +22,15 @@ python-dotenv
 requests
 uvicorn
 pydantic==1.9.0
+fastapi
+python-dotenv
+langchain_community
+langchain_openai
+uvicorn
+openai
+psycopg2-binary
+pydantic
+pytest
+httpx
+
 
