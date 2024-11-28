@@ -25,7 +25,7 @@ pipeline {
                 script {
                     env.PYTHONPATH = "${env.WORKSPACE}/backend"
                 }
-                sh 'pytest backend/tests/tests_backend.py'
+                sh 'python3 backend/tests/tests_backend.py'
             }
         }
 
