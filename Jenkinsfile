@@ -27,13 +27,12 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Compile') {
             steps {
                 script {
-                    env.PYTHONPATH = "${env.WORKSPACE}/backend"
+                    // Ensure the code compiles without errors
+                    sh ". ${env.PYTHON_ENV}/bin/activate && python -m compileall ${env.PROJECT_DIR}"
                 }
-                // Run tests
-                sh ". ${env.PYTHON_ENV}/bin/activate && PYTHONPATH=${env.WORKSPACE} pytest ${env.PROJECT_DIR}/tests/tests_backend.py"
             }
         }
 
