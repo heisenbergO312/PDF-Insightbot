@@ -1,7 +1,7 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
-from backend.app import app  # Assuming your FastAPI app is in backend/app.py
+from app import app  # Assuming your FastAPI app is in backend/app.py
 
 # Create a temporary directory for storing test PDFs
 TEMP_DIR = "backend/tests/temp"
