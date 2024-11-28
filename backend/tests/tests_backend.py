@@ -1,10 +1,10 @@
 import os
 import pytest
 from fastapi.testclient import TestClient
-from backend.app import app
+from backend.app import app  # Ensure this import is correct, depending on your project structure
 
-# Create a temporary directory for storing test PDFs
-TEMP_DIR = "backend/tests/temp"
+# Fixed path for the test PDF
+TEST_PDF_PATH = "/Users/rohan/Developer/PDF-Insightbot/backend/tests/ASAG_NLP.pdf"
 
 @pytest.fixture(scope="module")
 def client():
@@ -13,27 +13,22 @@ def client():
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_and_teardown():
-    # Setup: Create a temporary directory for the test PDFs
-    if not os.path.exists(TEMP_DIR):
-        os.makedirs(TEMP_DIR)
-    
-    # Create a dummy PDF file for testing purposes
-    test_pdf_path = os.path.join(TEMP_DIR, "test_file.pdf")
-    with open(test_pdf_path, "wb") as f:
-        f.write(b"%PDF-1.4 dummy pdf content")
+    # Setup: Ensure the test PDF exists
+    if not os.path.exists(TEST_PDF_PATH):
+        os.makedirs(os.path.dirname(TEST_PDF_PATH), exist_ok=True)
+        with open(TEST_PDF_PATH, "wb") as f:
+            f.write(b"%PDF-1.4 dummy pdf content")
     
     yield
     
-    # Teardown: Clean up the temporary files after the tests
-    if os.path.exists(TEMP_DIR):
-        for file in os.listdir(TEMP_DIR):
-            os.remove(os.path.join(TEMP_DIR, file))
-        os.rmdir(TEMP_DIR)
+    # Teardown: Clean up the test PDF after the tests
+    if os.path.exists(TEST_PDF_PATH):
+        os.remove(TEST_PDF_PATH)
 
 def test_upload(client):
     print("Running test_upload")
     # Test the /upload endpoint
-    with open(os.path.join(TEMP_DIR, "test_file.pdf"), "rb") as file:
+    with open(TEST_PDF_PATH, "rb") as file:
         response = client.post("/upload", files={"file": ("test_file.pdf", file, "application/pdf")})
     
     assert response.status_code == 200
@@ -42,10 +37,9 @@ def test_upload(client):
 def test_chat(client):
     print("Running test_chat")
     # Test the /chat endpoint
-    file_path = os.path.join(TEMP_DIR, "test_file.pdf")  # Provide the path where the file is uploaded
     query = "What is this document about?"  # A sample query for testing
     
-    response = client.post("/chat", json={"query": query, "file_path": file_path})
+    response = client.post("/chat", json={"query": query, "file_path": TEST_PDF_PATH})
     
     assert response.status_code == 200
     assert "result" in response.json()
