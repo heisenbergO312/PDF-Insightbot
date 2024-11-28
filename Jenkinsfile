@@ -22,7 +22,7 @@ pipeline {
             steps {
                 script {
                     // Install dependencies
-                    sh "${env.PYTHON_ENV}/bin/pip install -r ${env.PROJECT_DIR}/requirements.txt"
+                    sh ". ${env.PYTHON_ENV}/bin/activate && ${env.PYTHON_ENV}/bin/pip install -r ${env.PROJECT_DIR}/requirements.txt"
                 }
             }
         }
@@ -32,7 +32,7 @@ pipeline {
                 script {
                     env.PYTHONPATH = "${env.WORKSPACE}/backend"
                 }
-                sh ". ${env.PYTHON_ENV}/bin/activate && pytest ${env.PROJECT_DIR}/tests/tests_backend.py"
+                sh ". ${env.PYTHON_ENV}/bin/activate && PYTHONPATH=${env.WORKSPACE} pytest ${env.PROJECT_DIR}/tests/tests_backend.py"
             }
         }
 
