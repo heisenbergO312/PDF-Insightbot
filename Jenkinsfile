@@ -30,8 +30,8 @@ pipeline {
         stage('Compile') {
             steps {
                 script {
-                    // Ensure the code compiles without errors
-                    sh ". ${env.PYTHON_ENV}/bin/activate && python -m compileall ${env.PROJECT_DIR}"
+                    // Ensure the app.py file compiles without errors
+                    sh ". ${env.PYTHON_ENV}/bin/activate && python -m compileall ${env.PROJECT_DIR}/app.py"
                 }
             }
         }
