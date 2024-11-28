@@ -32,6 +32,7 @@ pipeline {
                 script {
                     env.PYTHONPATH = "${env.WORKSPACE}/backend"
                 }
+                // Run tests
                 sh ". ${env.PYTHON_ENV}/bin/activate && PYTHONPATH=${env.WORKSPACE} pytest ${env.PROJECT_DIR}/tests/tests_backend.py"
             }
         }
