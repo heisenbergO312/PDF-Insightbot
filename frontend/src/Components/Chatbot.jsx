@@ -20,8 +20,8 @@ export const Chatbot = () => {
   console.log(isAnimationActive);
   console.log(selectedFile, "selectedFile");
   console.log(chooseName);
-  console.log("res", chatResult);
-  console.log("visibleName", visibleName);
+  console.log("res  ", chatResult);
+  console.log("visibleName  ", visibleName);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,7 +76,7 @@ export const Chatbot = () => {
       });
       console.log("Response from server:", res);
       const chatReply = await res.data.result;
-      console.log("Chat Reply:", chatReply);
+      console.log("Chat Reply:  ", chatReply);
 
       const updatedConversation = [
         ...chatResult,
