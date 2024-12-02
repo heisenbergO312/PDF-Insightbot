@@ -109,7 +109,7 @@ export const Chatbot = () => {
           color="#DAC0A3"
           fontFamily={"'Lilita One', cursive"}
         >
-          DocuMentor
+        Pdf InsightBot
         </Text>
 
         <form action="" onSubmit={handleSubmit} style={{ margin: "auto" }}>
